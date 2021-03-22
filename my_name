@@ -1,0 +1,219 @@
+import pickle
+
+selection = int(input('Project : Student Management System \nChoose below options:'
+                      '\nPress 0 if you want to login as Teacher'
+                      '\nPress 1 if you want login as Student\n'))
+
+
+# Accepting Username and Password from user
+def user_input():
+    user_nm = input('Enter User Name: ')
+    user_pd = input('Enter a Password :')
+    return user_nm, user_pd
+
+
+# Verifying entered password and user present in the list or not.
+def authoriz(entered_user, entered_pwd):
+    with open('storage_authentication_file', 'rb') as data:
+        authentication_data = pickle.load(data)
+        print(authentication_data)
+        for user, pwd in authentication_data.items():
+            if user == entered_user and pwd == entered_pwd:
+                return True
+        else:
+            return False
+
+
+# Checking Username and password is existed in the list or not if not then added into the list
+def user_store_authentication(user_nm, password):
+
+    try:
+        with open('storage_authentication_file', 'rb') as data:
+            authentication_data = pickle.load(data)
+    except FileNotFoundError:
+        authentication_data = dict()
+
+    if user_nm in authentication_data:
+        print('User is existed in the list')
+    else:
+        print('This is new user adding in the list')
+        authentication_data[user_nm] = password
+
+    with open('storage_authentication_file', 'wb') as user:
+        pickle.dump(authentication_data, user)
+
+
+# Storing Student data into the pickle file
+def pickle_data():
+
+    try:
+        with open('storage_date_file', 'rb') as f:
+            dic = pickle.load(f)
+    except FileNotFoundError:
+        dic = dict()
+
+    name = input('Enter Student Name : ')
+    roll_no = int(input('Enter Student Roll Number :  '))
+    father_name = input("Enter Student's Father Name :  ")
+    english_marks = float(input('Enter Student English Marks : '))
+    maths_marks = float(input('Enter Student Maths Marks : '))
+    science_marks = float(input('Enter Student Science Marks : '))
+    total_marks = english_marks+maths_marks+science_marks
+    percentage1 = (total_marks/300) * 100
+
+    if roll_no in dic:   # If roll number is the pickle file then update it with above data
+        dic[roll_no] = [name, roll_no, father_name, english_marks, maths_marks, science_marks, total_marks, percentage1]
+    else:        # If roll number is not  in  the pickle file then create
+        dic[roll_no] = [name, roll_no, father_name, english_marks, maths_marks, science_marks, total_marks, percentage1]
+
+    with open('storage_date_file', 'wb') as f:
+        # For calculating rank dictionary is sorted and last element is fetched
+        dic = {key: values for key, values in sorted(dic.items(), key=lambda x: x[1][-1], reverse=True)}
+        pickle.dump(dic, f)
+
+    while True:
+        user_option = input('Do you want add to one more student data enter y else n : ')
+        if user_option == 'y':
+            pickle_data()
+        else:
+            break
+
+
+# Main Program starts from here
+if selection == 0:   # Log in as teacher
+    user_name, user_pwd = user_input()    # Enter User name and password
+    user_store_authentication(user_name, user_pwd)
+    authorization = authoriz(user_name, user_pwd)  # Check for authorization
+
+    if authorization:  # If authorization is true
+
+        user_options = input('Please choose below option :\n1 : Enter Student Details \n2 : Display Student Result'
+                             '\n3 : Search Student Roll Number \n')
+        if user_options == '1':        # Enter Student Details
+            pickle_data()
+            print('Student data is entered Successfully')
+        elif user_options == '2':   # Display Student Result
+            try:
+                with open('storage_date_file', 'rb') as file:
+                    pickle_data = pickle.load(file)
+                    print(pickle_data)
+            except FileNotFoundError:
+                print('Data file is not created yet.To create it please log in as teacher and choose 1')
+                exit()
+
+            entered_roll_number = int(input('Enter Roll Number : '))
+            counter = 0
+            for roll_no, value in pickle_data.items():
+                counter += 1
+                if pickle_data[roll_no][1] == entered_roll_number:
+                    rank = counter
+                    print('==' * 40)
+                    print('==' * 40)
+                    print("Ethan's Public School".center(40))
+                    print('==' * 40)
+                    print('==' * 40)
+                    print('Student Name : {} '.format(pickle_data[roll_no][0]))
+                    print('Father Name  : {} '.format(pickle_data[roll_no][2]))
+                    print('==' * 40)
+                    print('English      : {}'.format(pickle_data[roll_no][3]))
+                    print('Maths        : {}'.format(pickle_data[roll_no][4]))
+                    print('Science      : {}'.format(pickle_data[roll_no][5]))
+                    print('==' * 40)
+                    print('Total Marks  : {}'.format(pickle_data[roll_no][-2]))
+                    print('Percentage   : {}'.format(pickle_data[roll_no][-1]))
+                    print('Rank         : {}.'.format(counter))
+                    break
+            else:
+                print('Roll Number is not existed in the list')
+
+        elif user_options == '3':   # Search Student Roll Number according to his name
+            try:
+                with open('storage_date_file', 'rb') as file:
+                    pickle_data = pickle.load(file)
+            except FileNotFoundError:
+                print('Data file is not created yet.To create it please log in as teacher and choose 1')
+                exit()
+            student_name = input('Enter Student Name : ')
+            # search student name in the pickle file and enter his roll number
+
+            for roll_no, value in pickle_data.items():
+                if pickle_data[roll_no][0] == student_name:
+                    print('Student Roll Number is : {}'.format(pickle_data[roll_no][1]))
+                    break
+            else:
+                print('Student name is not present in the list')
+
+        else:
+            print('Incorrect Option.Please Choose correct option 1 or 2 or 3.')
+            exit()
+    else:
+        print('For entered Username, password is wrong.Please log in  again')
+        exit()
+
+elif selection == 1:   # logging as Student
+    user_name, user_pwd = user_input()
+    user_store_authentication(user_name, user_pwd)
+    authorization = authoriz(user_name, user_pwd)
+
+    if authorization:
+        user_options = input('Please choose below option : \n1 : Display Student Result'
+                             '\n2 : Search Student Roll Number \n')
+
+        if user_options == '1':  # Display Student Result. Call load function here and display result
+            try:
+                with open('storage_date_file', 'rb') as file:
+                    pickle_data = pickle.load(file)
+                    print(pickle_data)
+            except FileNotFoundError:
+                print('Data file is not created yet.To create it please log in as teacher and choose 1')
+                exit()
+            entered_roll_number = int(input('Enter Roll Number : '))
+
+            counter = 0
+            for roll_no, value in pickle_data.items():
+                counter += 1
+                if pickle_data[roll_no][1] == entered_roll_number:
+                    rank = counter
+                    print('==' * 40)
+                    print('==' * 40)
+                    print("Ethan's Public School".center(40))
+                    print('==' * 40)
+                    print('==' * 40)
+                    print('Student Name : {} '.format(pickle_data[roll_no][0]))
+                    print('Father Name  : {} '.format(pickle_data[roll_no][2]))
+                    print('=='*40)
+                    print('English      : {}'.format(pickle_data[roll_no][3]))
+                    print('Maths        : {}'.format(pickle_data[roll_no][4]))
+                    print('Science      : {}'.format(pickle_data[roll_no][5]))
+                    print('==' * 40)
+                    print('Total Marks  : {}'.format(pickle_data[roll_no][-2]))
+                    print('Percentage   : {}'.format(pickle_data[roll_no][-1]))
+                    print('Rank         : {}'.format(counter))
+                    break
+            else:
+                print('Roll Number is not existed in the list')
+
+        elif user_options == '2':   # Search Student Roll Number according to his name
+            #  Search student name in pickle and enter his roll no
+            try:
+                with open('storage_date_file', 'rb') as file:
+                    pickle_data = pickle.load(file)
+            except FileNotFoundError:
+                print('Data file is not created yet.To create it please log in as teacher and choose 1')
+                exit()
+            student_name = input('Enter Student Name : ')
+            for roll_no, value in pickle_data.items():
+                if pickle_data[roll_no][0] == student_name:
+                    print('Student Roll Number is : {}'.format(pickle_data[roll_no][1]))
+                    break
+            else:
+                print('Student name is not present in the list')
+
+        else:
+            print('Incorrect Option.Please Choose correct options 1 or 2')
+            exit()
+    else:
+        print('for entered Username, password is wrong.Please log in  again')
+        exit()
+else:
+    print('Please choose correct option 0 or 1')
